@@ -1,2 +1,3 @@
 chat_model_name: qwen3-max
+api_key: sk-04212dd1084d4ef2aa9aa814f80663fc
 embedding_model_name: text-embedding-v4

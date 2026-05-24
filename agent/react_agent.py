@@ -1,4 +1,15 @@
+import sys
+import os
+from typing import cast, Any
+from collections.abc import Sequence
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from langchain.agents import create_agent
+from langchain.agents import AgentState
+from langchain.agents.middleware import AgentMiddleware
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import HumanMessage
 from model.factory import chat_model
 from utils.prompt_loader import load_system_prompts
 from agent.tools.agent_tools import (rag_summarize, get_weather, get_user_location, get_user_id,
@@ -9,18 +20,20 @@ from agent.tools.middleware import monitor_tool, log_before_model, report_prompt
 class ReactAgent:
     def __init__(self):
         self.agent = create_agent(
-            model=chat_model,
+            model=cast(BaseChatModel, chat_model),
             system_prompt=load_system_prompts(),
             tools=[rag_summarize, get_weather, get_user_location, get_user_id,
                    get_current_month, fetch_external_data, fill_context_for_report],
-            middleware=[monitor_tool, log_before_model, report_prompt_switch],
+            middleware=cast(
+                Sequence[AgentMiddleware[AgentState[Any], Any, Any]],
+                [monitor_tool, log_before_model, report_prompt_switch],
+            ),
+            context_schema=dict,
         )
 
     def execute_stream(self, query: str):
         input_dict = {
-            "messages": [
-                {"role": "user", "content": query},
-            ]
+            "messages": [HumanMessage(content=query)],
         }
 
         # 第三个参数context就是上下文runtime中的信息，就是我们做提示词切换的标记
