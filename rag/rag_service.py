@@ -18,9 +18,18 @@ def print_prompt(prompt):
 
 
 class RagSummarizeService(object):
-    def __init__(self):
+    def __init__(self, retriever_mode="hybrid"):
+        """
+        :param retriever_mode: "vector" 纯向量 | "hybrid" 混合检索
+        """
         self.vector_store = VectorStoreService()
-        self.retriever = self.vector_store.get_retriever()
+        self.retriever_mode = retriever_mode
+
+        if retriever_mode == "hybrid":
+            self.retriever = self.vector_store.get_hybrid_retriever()
+        else:
+            self.retriever = self.vector_store.get_retriever()
+
         self.prompt_text = load_rag_prompts()
         self.prompt_template = PromptTemplate.from_template(self.prompt_text)
         self.model = chat_model

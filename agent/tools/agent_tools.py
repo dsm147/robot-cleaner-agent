@@ -6,7 +6,7 @@ import random
 from utils.config_handler import agent_conf
 from utils.path_tool import get_abs_path
 
-rag = RagSummarizeService()
+rag = RagSummarizeService(retriever_mode="hybrid")
 
 user_ids = ["1001", "1002", "1003", "1004", "1005", "1006", "1007", "1008", "1009", "1010",]
 month_arr = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06",

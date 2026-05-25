@@ -1,0 +1,16 @@
+# 运行时缓存
+bm25_cache.pkl
+bm25_cache_key.txt
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 向量库持久化
+chroma_db/
+
+# 环境/IDE
+.idea/
+.vscode/
+.env

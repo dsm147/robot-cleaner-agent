@@ -1,5 +1,7 @@
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_classic.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from utils.config_handler import chroma_conf
 from model.factory import embed_model
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -7,6 +9,9 @@ from utils.path_tool import get_abs_path
 from utils.file_handler import pdf_loader, txt_loader, listdir_with_allowed_type, get_file_md5_hex
 from utils.logger_handler import logger
 import os
+import pickle
+import time
+import hashlib
 
 
 class VectorStoreService:
@@ -98,6 +103,103 @@ class VectorStoreService:
                 # exc_info为True会记录详细的报错堆栈，如果为False仅记录报错信息本身
                 logger.error(f"[加载知识库]{path}加载失败：{str(e)}", exc_info=True)
                 continue
+
+    def get_hybrid_retriever(self):
+        """返回混合检索器：向量检索 + BM25 关键字检索（使用序列化缓存）"""
+        bm25_retriever = self._get_cached_bm25_retriever()
+        vector_retriever = self.get_retriever()
+
+        hybrid_retriever = EnsembleRetriever(
+            retrievers=[vector_retriever, bm25_retriever],
+            weights=[0.5, 0.5],
+        )
+
+        return hybrid_retriever
+
+    # ── BM25 缓存相关 ──────────────────────────────────────────────
+
+    def _bm25_cache_path(self) -> str:
+        return get_abs_path("bm25_cache.pkl")
+
+    def _bm25_cache_key_path(self) -> str:
+        return get_abs_path("bm25_cache_key.txt")
+
+    def _compute_bm25_cache_key(self) -> str:
+        """用所有源文件的 MD5 拼接成一个缓存键，文件变了键就变"""
+        data_path = get_abs_path(chroma_conf["data_path"])
+        allowed_files = listdir_with_allowed_type(
+            data_path, tuple(chroma_conf["allow_knowledge_file_type"])
+        )
+        allowed_files = sorted(allowed_files)
+
+        hasher = hashlib.md5()
+        for filepath in allowed_files:
+            file_md5 = get_file_md5_hex(filepath)
+            if file_md5:
+                hasher.update(file_md5.encode())
+        return hasher.hexdigest()
+
+    def _get_cached_bm25_retriever(self):
+        """尝试从磁盘加载缓存的 BM25 检索器，无效则重新构建并缓存"""
+        cache_path = self._bm25_cache_path()
+        key_path = self._bm25_cache_key_path()
+
+        # 检查缓存是否有效（文件存在且源文件未变化）
+        if os.path.exists(cache_path) and os.path.exists(key_path):
+            with open(key_path, "r", encoding="utf-8") as f:
+                cached_key = f.read().strip()
+            if cached_key == self._compute_bm25_cache_key():
+                logger.info("[BM25缓存]命中缓存，从磁盘加载")
+                with open(cache_path, "rb") as f:
+                    retriever = pickle.load(f)
+                retriever.k = chroma_conf["k"]
+                return retriever
+
+        # 缓存无效，重新构建
+        logger.info("[BM25缓存]未命中，重新构建 BM25 索引")
+        t_start = time.time()
+
+        all_docs = self._get_all_documents()
+        retriever = BM25Retriever.from_documents(
+            documents=all_docs,
+            k=chroma_conf["k"],
+        )
+        retriever.k = chroma_conf["k"]
+
+        elapsed = time.time() - t_start
+        logger.info(f"[BM25缓存]索引构建完成，耗时 {elapsed:.2f}s，文档数 {len(all_docs)}")
+
+        # 序列化到磁盘
+        with open(cache_path, "wb") as f:
+            pickle.dump(retriever, f)
+        with open(key_path, "w", encoding="utf-8") as f:
+            f.write(self._compute_bm25_cache_key())
+        logger.info(f"[BM25缓存]已序列化到 {cache_path}")
+
+        return retriever
+
+    def _get_all_documents(self) -> list[Document]:
+        """从知识库文件中读取所有文档并分片（含计时）"""
+        t_start = time.time()
+
+        data_path = get_abs_path(chroma_conf["data_path"])
+        allowed_files = listdir_with_allowed_type(
+            data_path, tuple(chroma_conf["allow_knowledge_file_type"])
+        )
+
+        all_docs = []
+        for path in allowed_files:
+            if path.endswith("txt"):
+                all_docs.extend(txt_loader(path))
+            elif path.endswith("pdf"):
+                all_docs.extend(pdf_loader(path))
+
+        split_docs = self.spliter.split_documents(all_docs)
+
+        elapsed = time.time() - t_start
+        logger.info(f"[文档加载]共 {len(split_docs)} 个分片，耗时 {elapsed:.2f}s")
+
+        return split_docs
 
 
 if __name__ == '__main__':
