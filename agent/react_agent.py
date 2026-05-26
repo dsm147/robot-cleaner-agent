@@ -38,6 +38,7 @@ class ReactAgent:
             "messages": [HumanMessage(content=query)],
         }
 
+        last_content = ""
         # 第三个参数context就是上下文runtime中的信息，就是我们做提示词切换的标记
         for chunk in self.agent.stream(input_dict, stream_mode="values", context={"report": False}):
             latest_message = chunk["messages"][-1]
@@ -47,7 +48,11 @@ class ReactAgent:
                     if name and name not in self.last_tool_calls:
                         self.last_tool_calls.append(name)
             if latest_message.content:
-                yield latest_message.content.strip() + "\n"
+                content = latest_message.content.strip()
+                # stream_mode="values" 在 agent 结束时可能重复 yield 同一状态
+                if content and content != last_content:
+                    last_content = content
+                    yield content + "\n"
 
 
 if __name__ == '__main__':
