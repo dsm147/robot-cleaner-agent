@@ -1,3 +1,6 @@
+"""
+模型工厂：提供 Chat 和 Embedding 模型的懒加载单例
+"""
 import os
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -9,12 +12,11 @@ from utils.config_handler import rag_conf
 
 
 def _get_api_key() -> str:
-    """优先从环境变量读取 API key，否则从 YAML 配置文件读取"""
+    """从环境变量读取 DASHSCOPE_API_KEY"""
     key = os.environ.get("DASHSCOPE_API_KEY")
     if key:
         return key
-    # 兼容旧版：配置文件中仍有 api_key 字段时使用
-    return rag_conf.get("api_key", "")
+    raise ValueError("DASHSCOPE_API_KEY 未设置！请通过环境变量配置：export DASHSCOPE_API_KEY=your_key")
 
 
 class BaseModelFactory(ABC):
@@ -30,8 +32,42 @@ class ChatModelFactory(BaseModelFactory):
 
 class EmbeddingsFactory(BaseModelFactory):
     def generator(self) -> Optional[Embeddings | BaseChatModel]:
-        return DashScopeEmbeddings(model=rag_conf["embedding_model_name"], dashscope_api_key=_get_api_key())
+        return DashScopeEmbeddings(
+            model=rag_conf["embedding_model_name"],
+            dashscope_api_key=_get_api_key(),
+        )
 
 
-chat_model = ChatModelFactory().generator()
-embed_model = EmbeddingsFactory().generator()
+# ---- 懒加载实现 ----
+# 使用模块级 __getattr__，首次访问 chat_model / embed_model 时才初始化
+# 同时支持 unittest.mock.patch 正常 Mock
+
+_chat_model = None
+_embed_model = None
+
+
+def get_chat_model():
+    global _chat_model
+    if _chat_model is None:
+        _chat_model = ChatModelFactory().generator()
+    return _chat_model
+
+
+def get_embedding_model():
+    global _embed_model
+    if _embed_model is None:
+        _embed_model = EmbeddingsFactory().generator()
+    return _embed_model
+
+
+def __getattr__(name):
+    if name == "chat_model":
+        return get_chat_model()
+    elif name == "embed_model":
+        return get_embedding_model()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+if __name__ == '__main__':
+    print(f"Chat Model: {get_chat_model()}")
+    print(f"Embed Model: {get_embedding_model()}")

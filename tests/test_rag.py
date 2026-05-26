@@ -25,6 +25,11 @@ class TestRagService:
 
     def test_summarize_with_reranker(self):
         from rag.rag_service import RagSummarizeService
-        rag = RagSummarizeService(retriever_mode="hybrid", use_reranker=True)
-        result = rag.rag_summarize("E05 报错")
-        assert isinstance(result, str)
+        from unittest.mock import patch
+        # Mock CrossEncoder 避免下载模型
+        with patch("rag.reranker.CrossEncoderReranker") as mock_cls:
+            mock_instance = mock_cls.return_value
+            mock_instance.rerank.return_value = []
+            rag = RagSummarizeService(retriever_mode="hybrid", use_reranker=True)
+            result = rag.rag_summarize("E05 报错")
+            assert isinstance(result, str)

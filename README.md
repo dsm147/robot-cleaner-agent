@@ -5,6 +5,66 @@
 
 一个面向扫地机器人 / 扫拖一体机器人的 AI 智能客服系统，结合 **RAG（检索增强生成）** 与 **AI Agent（智能体）** 技术，提供产品咨询、故障排查、使用报告生成等功能。
 
+---
+
+## 项目结构
+
+```
+├── agent/                   # Agent 层
+│   ├── react_agent.py       # LangChain ReAct Agent（推荐，生产用）
+│   ├── manual_agent.py      # 手写 ReAct Agent（学习/调试用）
+│   ├── orchestrator.py      # Multi-Agent 调度器
+│   └── tools/
+│       ├── agent_tools.py   # 7 个工具定义
+│       └── middleware.py    # Agent 中间件（日志/提示词切换）
+├── rag/                     # RAG 检索层
+│   ├── rag_service.py       # RAG 总结服务（检索+生成）
+│   ├── vector_store.py      # ChromaDB 向量库 + BM25 混合检索
+│   ├── query_rewrite.py     # 查询改写
+│   ├── hyde.py              # 假设文档检索
+│   ├── reranker.py          # Cross-encoder 重排序
+│   ├── context_compressor.py# 上下文压缩
+│   └── structured_output.py # 结构化输出
+├── model/
+│   └── factory.py           # 模型工厂（懒加载单例）
+├── utils/
+│   ├── config_handler.py    # YAML 配置加载
+│   ├── path_tool.py         # 路径工具
+│   ├── prompt_loader.py     # 提示词文件加载
+│   ├── logger_handler.py    # 日志配置
+│   └── file_handler.py      # 文件处理
+├── config/                  # YAML 配置
+│   ├── rag.yml              # 模型/检索模式配置
+│   ├── chroma.yml           # 向量库参数
+│   ├── agent.yml            # Agent 数据路径
+│   └── prompts.yml          # 提示词文件路径
+├── prompts/                 # 系统提示词
+├── data/                    # 知识库源文件
+│   └── external/records.csv # 模拟用户使用记录
+├── eval/                    # 评估系统
+│   ├── eval_rag.py          # RAG 质量评估
+│   ├── eval_agent.py        # Agent 行为评估
+│   ├── eval_metrics.py      # 量化指标（Hit Rate, MRR）
+│   └── test_dataset.json    # 测试用例
+├── tests/                   # pytest 自动化测试
+│   ├── conftest.py          # 共享 Mock 配置
+│   ├── test_rag.py          # RAG 测试
+│   ├── test_agent.py        # Agent + Multi-Agent 测试
+│   ├── test_api.py          # API 测试
+│   └── test_utils.py        # 工具函数测试
+├── test_union/              # 手动集成测试
+├── app.py                   # Streamlit Web 界面
+├── api_server.py            # FastAPI REST API
+├── cli_multi_agent.py       # 命令行多 Agent
+├── Dockerfile               # 多阶段构建
+├── docker-compose.yml       # 生产部署
+├── docker-compose.override.yml # 本地开发覆盖
+├── .env.example             # 环境变量示例
+└── requirements.txt         # Python 依赖
+```
+
+---
+
 ## 技术栈
 
 | 层 | 技术 |
@@ -14,9 +74,9 @@
 | 向量库 | ChromaDB + text-embedding-v4 |
 | 检索 | 混合检索（向量 + BM25）+ Cross-encoder Reranker |
 | Agent | LangChain Agent / 手写 ReAct / LangGraph 三种实现 |
-| 评估 | RAGAS (Hit Rate, MRR, Faithfulness) |
+| 评估 | Hit Rate, MRR, 工具调用准确率 |
 | 测试 | pytest（单元 + 集成）|
-| 部署 | Docker + docker-compose / GitHub Actions CI |
+| 部署 | Docker 多阶段构建 + docker-compose / GitHub Actions CI |
 
 ---
 
@@ -51,7 +111,6 @@
 | **`rag.yml`** | 修改模型/检索模式时 | 指定聊天模型（如 qwen3-max）、嵌入模型、默认检索模式 |
 | **`chroma.yml`** | 调整向量库参数时 | 向量库名、分块大小（chunk_size）、检索数量（k）、数据目录等 |
 | **`agent.yml`** | Agent 读取外部数据时 | 外部数据文件路径（external_data_path） |
-| **`multi_agent.yml`** | 运行多 Agent 模式时 | 调度Agent/客服Agent/报告Agent的模型和提示词配置 |
 | **`prompts.yml`** | 修改提示词文件位置时 | 各提示词文件的相对路径 |
 
 > **关联文件**: `config_handler.py`（第 2 层）读取这些 yml 文件。
@@ -99,9 +158,7 @@
 **功能**：
 - 从 `rag.yml` 读取模型名称（默认 `qwen3-max`）
 - 从环境变量 `DASHSCOPE_API_KEY` 读取 API Key
-- 创建两个全局单例：
-  - `chat_model` — 对话模型（`ChatTongyi`），用于所有 LLM 调用
-  - `embed_model` — 嵌入模型（`DashScopeEmbeddings`，`text-embedding-v4`），用于向量化
+- 懒加载单例：`chat_model` 和 `embed_model` 在首次访问时初始化，不在 import 时初始化
 
 **关联文件**：
 - ← 读取 `config/rag.yml`
@@ -313,7 +370,7 @@
 streamlit run app.py
 ```
 
-**功能**：Streamlit 聊天界面，使用 `ReactAgent`，支持流式输出。
+**功能**：Streamlit 聊天界面，使用 `ReactAgent`，支持流式输出、清空对话、侧边栏信息展示。
 
 ### `api_server.py` — FastAPI REST API
 
@@ -329,6 +386,8 @@ python api_server.py
 - `GET /health` — 健康检查
 - `POST /chat` — 非流式聊天
 - `POST /chat/stream` — SSE 流式聊天
+
+**改进**：支持 CORS 跨域访问、启动时校验 API Key 配置。
 
 **自动文档**：启动后访问 `http://localhost:8000/docs` 查看 Swagger 文档。
 
@@ -413,7 +472,7 @@ pytest tests/ --cov=. --cov-report=term-missing
 |---|---|
 | **`conftest.py`** | 共享 Mock 配置，自动 Mock `chat_model` |
 | **`test_rag.py`** | RAG 初始化、检索模式切换、总结功能 |
-| **`test_agent.py`** | ReactAgent / ManualAgent 初始化、流式输出、工具调用追踪 |
+| **`test_agent.py`** | ReactAgent / ManualAgent / MultiAgentSystem |
 | **`test_api.py`** | API 健康检查、聊天接口、流式接口、边界情况 |
 | **`test_utils.py`** | 路径工具、配置文件加载 |
 
@@ -482,8 +541,17 @@ python test_union/5_test_prompts.py
 ### 配置环境变量
 
 ```bash
+# Linux / macOS
 export DASHSCOPE_API_KEY=your_api_key_here
+
+# Windows PowerShell
+$env:DASHSCOPE_API_KEY="your_api_key_here"
+
+# Windows CMD
+set DASHSCOPE_API_KEY=your_api_key_here
 ```
+
+或复制 `.env.example` 为 `.env` 文件并填入密钥（需自行解析 .env 的工具）。
 
 ### 加载知识库
 
@@ -531,8 +599,11 @@ python test_union/3_retrieval_modes_test.py
 # 确保设置了 API Key
 export DASHSCOPE_API_KEY=your_key_here
 
-# 一键启动
+# 生产环境启动
 docker compose up -d
+
+# 开发环境启动（自动热重载）
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
 # 查看日志
 docker compose logs -f

@@ -4,16 +4,39 @@ FastAPI 智能客服 API
 """
 import sys
 import os
+from contextlib import asynccontextmanager
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from agent.react_agent import ReactAgent
 from agent.orchestrator import MultiAgentSystem
 
-app = FastAPI(title="智扫通智能客服 API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """启动时校验关键配置"""
+    if not os.environ.get("DASHSCOPE_API_KEY"):
+        import warnings
+        warnings.warn(
+            "⚠️ DASHSCOPE_API_KEY 未设置！请通过环境变量配置后再调用 API。"
+        )
+    yield
+
+
+app = FastAPI(title="智扫通智能客服 API", version="1.0.0", lifespan=lifespan)
+
+# CORS 配置：允许前端跨域访问
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 _agent = None
 _multi_agent = None

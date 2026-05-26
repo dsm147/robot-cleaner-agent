@@ -10,6 +10,9 @@ __pycache__/
 # 向量库持久化
 chroma_db/
 
+# 日志
+logs/
+
 # 环境/IDE
 .idea/
 .vscode/
