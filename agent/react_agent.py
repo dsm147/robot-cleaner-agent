@@ -9,7 +9,7 @@ from langchain.agents import create_agent
 from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from model.factory import chat_model
 from utils.prompt_loader import load_system_prompts
 from agent.tools.agent_tools import (rag_summarize, get_weather, get_user_location, get_user_id,
@@ -47,7 +47,8 @@ class ReactAgent:
                     name = tc.get("function", {}).get("name", "")
                     if name and name not in self.last_tool_calls:
                         self.last_tool_calls.append(name)
-            if latest_message.content:
+            # 只 yield AI 的回复，过滤 HumanMessage（START 节点的初始状态）和 ToolMessage
+            if isinstance(latest_message, AIMessage) and latest_message.content:
                 content = latest_message.content.strip()
                 # stream_mode="values" 在 agent 结束时可能重复 yield 同一状态
                 if content and content != last_content:
