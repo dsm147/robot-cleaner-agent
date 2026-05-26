@@ -54,8 +54,11 @@
 │   └── test_utils.py        # 工具函数测试
 ├── test_union/              # 手动集成测试
 ├── app.py                   # Streamlit Web 界面
-├── api_server.py            # FastAPI REST API
+├── api_server.py            # FastAPI REST API（生产环境也提供前端静态文件）
 ├── cli_multi_agent.py       # 命令行多 Agent
+├── frontend/                # React 聊天界面 (Vite + TypeScript)
+│   ├── src/App.tsx          #   聊天组件
+│   └── vite.config.ts       #   开发环境代理 /chat → localhost:8000
 ├── Dockerfile               # 多阶段构建
 ├── docker-compose.yml       # 生产部署
 ├── docker-compose.override.yml # 本地开发覆盖
@@ -372,9 +375,9 @@ streamlit run app.py
 
 **功能**：Streamlit 聊天界面，使用 `ReactAgent`，支持流式输出、清空对话、侧边栏信息展示。
 
-### `api_server.py` — FastAPI REST API
+### `api_server.py` — FastAPI REST API（含前端静态服务）
 
-**何时用到**：想通过 HTTP 调用智能客服时（集成到其他系统、小程序、企业微信等）。
+**何时用到**：想通过 HTTP 调用智能客服时（集成到其他系统、小程序、企业微信等），或想直接使用 Web 聊天界面时。
 
 **如何启动**：
 ```bash
@@ -382,14 +385,36 @@ python api_server.py
 # 或: uvicorn api_server:app --host 0.0.0.0 --port 8000
 ```
 
-**功能**：提供三个接口：
+**功能**：提供三个 API 接口 + 一个 Web 界面：
 - `GET /health` — 健康检查
 - `POST /chat` — 非流式聊天
 - `POST /chat/stream` — SSE 流式聊天
+- `GET /` — React 聊天界面（生产环境，需先构建前端）
 
 **改进**：支持 CORS 跨域访问、启动时校验 API Key 配置。
 
 **自动文档**：启动后访问 `http://localhost:8000/docs` 查看 Swagger 文档。
+
+**React 前端**：生产环境下直接访问 `http://localhost:8000` 即可看到聊天界面（前端静态文件由 FastAPI 自动服务）。
+
+### `frontend/` — React 聊天界面
+
+**何时用到**：想通过现代 Web 界面和 AI 客服对话时。
+
+**技术栈**：React 19 + TypeScript + Vite。
+
+**开发模式启动**（前后端分离，支持热重载）：
+```bash
+# 终端 1：启动后端 API
+python api_server.py
+
+# 终端 2：启动前端开发服务器
+cd frontend
+npm install   # 首次运行需要
+npm run dev   # 访问 http://localhost:5173
+```
+
+**生产模式**：`api_server.py` 在检测到 `frontend/dist/` 目录存在时，自动挂载为静态文件服务。Docker 构建会自动生产前端产物，部署后直接访问 `http://localhost:8000`。
 
 ### `cli_multi_agent.py` — 命令行多 Agent 界面
 
