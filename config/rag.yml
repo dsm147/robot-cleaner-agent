@@ -1,3 +1,4 @@
 chat_model_name: qwen3-max
-# api_key: 不再写在配置文件中，改为从环境变量 DASHSCOPE_API_KEY 读取
+# api_key: 从环境变量 DASHSCOPE_API_KEY 读取
 embedding_model_name: text-embedding-v4
+retriever_mode: hybrid    # 可选: vector | hybrid | rewrite | hyde

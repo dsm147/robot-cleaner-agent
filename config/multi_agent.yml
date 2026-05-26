@@ -1,0 +1,24 @@
+agents:
+  orchestrator:
+    name: 调度Agent
+    model: qwen3-max
+    prompt_path: prompts/orchestrator_prompt.txt
+
+  customer_service:
+    name: 客服Agent
+    model: qwen3-max
+    prompt_path: prompts/customer_service_prompt.txt
+    tools:
+      - rag_summarize
+      - get_weather
+      - get_user_location
+
+  report:
+    name: 报告Agent
+    model: qwen3-max
+    prompt_path: prompts/report_agent_prompt.txt
+    tools:
+      - get_user_id
+      - get_current_month
+      - fill_context_for_report
+      - fetch_external_data

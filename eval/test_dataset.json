@@ -1,0 +1,91 @@
+[
+    {
+        "id": "spec_01",
+        "question": "X90 的吸力多大？",
+        "expected_answer": "5000Pa",
+        "expected_tools": ["rag_summarize"],
+        "category": "产品规格",
+        "notes": "精确参数查询"
+    },
+    {
+        "id": "spec_02",
+        "question": "扫拖一体机器人有哪些型号？",
+        "expected_tools": ["rag_summarize"],
+        "category": "产品规格"
+    },
+    {
+        "id": "fault_01",
+        "question": "E05 报错是什么意思？",
+        "expected_answer": "激光雷达传感器异常",
+        "expected_tools": ["rag_summarize"],
+        "category": "故障处理"
+    },
+    {
+        "id": "fault_02",
+        "question": "机器人一直显示离线怎么办？",
+        "expected_tools": ["rag_summarize"],
+        "category": "故障处理"
+    },
+    {
+        "id": "buy_01",
+        "question": "小户型适合什么机器人？",
+        "expected_tools": ["rag_summarize"],
+        "category": "选购建议"
+    },
+    {
+        "id": "buy_02",
+        "question": "2000 元预算推荐哪款？",
+        "expected_tools": ["rag_summarize"],
+        "category": "选购建议"
+    },
+    {
+        "id": "buy_03",
+        "question": "养猫家庭适合用扫地机器人吗？",
+        "expected_tools": ["rag_summarize"],
+        "category": "选购建议"
+    },
+    {
+        "id": "weather_01",
+        "question": "深圳今天天气怎么样？",
+        "expected_tools": ["get_user_location", "get_weather"],
+        "category": "天气适配"
+    },
+    {
+        "id": "weather_02",
+        "question": "合肥今天适合用机器人吗？",
+        "expected_tools": ["get_weather"],
+        "category": "天气适配"
+    },
+    {
+        "id": "report_01",
+        "question": "生成我的使用报告",
+        "expected_tools": ["get_user_id", "get_current_month", "fill_context_for_report", "fetch_external_data"],
+        "category": "报告生成"
+    },
+    {
+        "id": "report_02",
+        "question": "查一下我上个月的使用记录",
+        "expected_tools": ["get_user_id", "get_current_month", "fill_context_for_report", "fetch_external_data"],
+        "category": "报告生成"
+    },
+    {
+        "id": "edge_01",
+        "question": "你好",
+        "expected_tools": [],
+        "category": "边界情况",
+        "notes": "无工具调用场景"
+    },
+    {
+        "id": "edge_02",
+        "question": "世界上最高的山是什么？",
+        "expected_tools": [],
+        "category": "边界情况",
+        "notes": "超出知识范围"
+    },
+    {
+        "id": "edge_03",
+        "question": "你会做什么？",
+        "expected_tools": [],
+        "category": "边界情况"
+    }
+]

@@ -29,8 +29,9 @@ class VectorStoreService:
             length_function=len,
         )
 
-    def get_retriever(self):
-        return self.vector_store.as_retriever(search_kwargs={"k": chroma_conf["k"]})
+    def get_retriever(self, search_k=None):
+        k = search_k if search_k is not None else chroma_conf["k"]
+        return self.vector_store.as_retriever(search_kwargs={"k": k})
 
     def load_document(self):
         """
@@ -104,10 +105,10 @@ class VectorStoreService:
                 logger.error(f"[加载知识库]{path}加载失败：{str(e)}", exc_info=True)
                 continue
 
-    def get_hybrid_retriever(self):
+    def get_hybrid_retriever(self, retriever_k=None):
         """返回混合检索器：向量检索 + BM25 关键字检索（使用序列化缓存）"""
-        bm25_retriever = self._get_cached_bm25_retriever()
-        vector_retriever = self.get_retriever()
+        bm25_retriever = self._get_cached_bm25_retriever(search_k=retriever_k)
+        vector_retriever = self.get_retriever(search_k=retriever_k)
 
         hybrid_retriever = EnsembleRetriever(
             retrievers=[vector_retriever, bm25_retriever],
@@ -139,10 +140,11 @@ class VectorStoreService:
                 hasher.update(file_md5.encode())
         return hasher.hexdigest()
 
-    def _get_cached_bm25_retriever(self):
+    def _get_cached_bm25_retriever(self, search_k=None):
         """尝试从磁盘加载缓存的 BM25 检索器，无效则重新构建并缓存"""
         cache_path = self._bm25_cache_path()
         key_path = self._bm25_cache_key_path()
+        k = search_k if search_k is not None else chroma_conf["k"]
 
         # 检查缓存是否有效（文件存在且源文件未变化）
         if os.path.exists(cache_path) and os.path.exists(key_path):
@@ -152,7 +154,7 @@ class VectorStoreService:
                 logger.info("[BM25缓存]命中缓存，从磁盘加载")
                 with open(cache_path, "rb") as f:
                     retriever = pickle.load(f)
-                retriever.k = chroma_conf["k"]
+                retriever.k = k
                 return retriever
 
         # 缓存无效，重新构建
@@ -162,9 +164,9 @@ class VectorStoreService:
         all_docs = self._get_all_documents()
         retriever = BM25Retriever.from_documents(
             documents=all_docs,
-            k=chroma_conf["k"],
+            k=k,
         )
-        retriever.k = chroma_conf["k"]
+        retriever.k = k
 
         elapsed = time.time() - t_start
         logger.info(f"[BM25缓存]索引构建完成，耗时 {elapsed:.2f}s，文档数 {len(all_docs)}")
