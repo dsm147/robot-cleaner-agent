@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: zhisweep-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+    volumes:
+      - chroma-data:/app/chroma_db
+      - ./data:/app/data
+    restart: unless-stopped
+
+  ui:
+    build: .
+    container_name: zhisweep-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  chroma-data:

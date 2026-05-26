@@ -1,6 +1,22 @@
 # 智扫通机器人智能客服系统
 
+![Python](https://img.shields.io/badge/python-3.11-blue)
+[![CI](https://github.com/dsm147/agent-rag/actions/workflows/test.yml/badge.svg)](https://github.com/dsm147/agent-rag/actions/workflows/test.yml)
+
 一个面向扫地机器人 / 扫拖一体机器人的 AI 智能客服系统，结合 **RAG（检索增强生成）** 与 **AI Agent（智能体）** 技术，提供产品咨询、故障排查、使用报告生成等功能。
+
+## 技术栈
+
+| 层 | 技术 |
+|---|---|
+| 框架 | FastAPI (API) / Streamlit (UI) |
+| LLM | Qwen3-max (通义千问) via DashScope API |
+| 向量库 | ChromaDB + text-embedding-v4 |
+| 检索 | 混合检索（向量 + BM25）+ Cross-encoder Reranker |
+| Agent | LangChain Agent / 手写 ReAct / LangGraph 三种实现 |
+| 评估 | RAGAS (Hit Rate, MRR, Faithfulness) |
+| 测试 | pytest（单元 + 集成）|
+| 部署 | Docker + docker-compose / GitHub Actions CI |
 
 ---
 
@@ -66,7 +82,7 @@
 | **`orchestrator_prompt.txt`** | `orchestrator.py` 的 `OrchestratorAgent` | 调度提示词：判断用户意图是"客服咨询"还是"报告生成" |
 | **`customer_service_prompt.txt`** | `orchestrator.py` 的 `CustomerServiceAgent` | 客服 Agent 提示词：简化版，只有 3 个工具 |
 | **`report_agent_prompt.txt`** | `orchestrator.py` 的 `ReportAgent` | 报告 Agent 提示词：只有报告相关工具 |
-| **`report_prompt.txt`** | `middleware.py` 的动态提示词切换 | 报告场景的备用提示词：当 `fill_context_for_report` 被调用后替换主提示词 |
+| **`report_switch_prompt.txt`** | `middleware.py` 的动态提示词切换 | 报告场景的备用提示词：当 `fill_context_for_report` 被调用后替换主提示词 |
 
 > **提示词关系图**：
 > - 单 Agent 模式：`main_prompt.txt` 包含全部 7 个工具，Agent 自主判断用哪个
@@ -299,6 +315,23 @@ streamlit run app.py
 
 **功能**：Streamlit 聊天界面，使用 `ReactAgent`，支持流式输出。
 
+### `api_server.py` — FastAPI REST API
+
+**何时用到**：想通过 HTTP 调用智能客服时（集成到其他系统、小程序、企业微信等）。
+
+**如何启动**：
+```bash
+python api_server.py
+# 或: uvicorn api_server:app --host 0.0.0.0 --port 8000
+```
+
+**功能**：提供三个接口：
+- `GET /health` — 健康检查
+- `POST /chat` — 非流式聊天
+- `POST /chat/stream` — SSE 流式聊天
+
+**自动文档**：启动后访问 `http://localhost:8000/docs` 查看 Swagger 文档。
+
 ### `cli_multi_agent.py` — 命令行多 Agent 界面
 
 **何时用到**：想在终端体验多 Agent 分工时。
@@ -346,9 +379,45 @@ python cli_multi_agent.py
 
 每个用例包含 question、expected_tools、expected_answer、category。
 
+### `eval/eval_metrics.py` — 量化评估指标
+
+**何时用到**：想用数据说话时。
+
+**功能**：计算检索质量的 **Hit Rate**（命中率）和 **MRR**（平均倒数排名），可选基于 RAGAS 框架的 **Faithfulness**（忠实度）和 **Answer Relevancy**（答案相关度）。
+
+```bash
+python eval/eval_metrics.py
+```
+
 ---
 
-## 测试脚本：拿来就能跑
+## 自动化测试
+
+### `tests/` — pytest 单元测试
+
+使用 pytest 编写的自动化测试，Mock 了 LLM 调用，不消耗 API 费用。
+
+```bash
+# 安装测试依赖
+pip install pytest httpx
+
+# 运行全部测试
+pytest tests/ -v
+
+# 查看覆盖率
+pip install pytest-cov
+pytest tests/ --cov=. --cov-report=term-missing
+```
+
+| 文件 | 测试内容 |
+|---|---|
+| **`conftest.py`** | 共享 Mock 配置，自动 Mock `chat_model` |
+| **`test_rag.py`** | RAG 初始化、检索模式切换、总结功能 |
+| **`test_agent.py`** | ReactAgent / ManualAgent 初始化、流式输出、工具调用追踪 |
+| **`test_api.py`** | API 健康检查、聊天接口、流式接口、边界情况 |
+| **`test_utils.py`** | 路径工具、配置文件加载 |
+
+## 手动测试脚本
 
 ### `test_union/` — 测试脚本集合
 
@@ -380,7 +449,8 @@ python test_union/5_test_prompts.py
 
 ### `tutorial/` — 从零到一学本项目
 
-10 节课（lesson_01 ~ lesson_10），按顺序学习：
+**基础篇**（lesson_01 ~ lesson_10）：读懂项目代码，理解 RAG 和 Agent 原理。
+**进阶篇**（lesson_11 ~ lesson_15）：把项目做到可部署上线，写进简历。
 
 | 课程 | 文件 | 覆盖内容 |
 |---|---|---|
@@ -394,6 +464,11 @@ python test_union/5_test_prompts.py
 | 第 8 课 | `lesson_08_langgraph.md` | LangGraph 框架 |
 | 第 9 课 | `lesson_09_evaluation.md` | 评估系统 |
 | 第 10 课 | `lesson_10_multi_agent.md` | 多 Agent 系统 |
+| 第 11 课 | `lesson_11_fastapi.md` | FastAPI + 流式 API |
+| 第 12 课 | `lesson_12_testing.md` | pytest 自动化测试 |
+| 第 13 课 | `lesson_13_docker.md` | Docker 部署 |
+| 第 14 课 | `lesson_14_eval_metrics.md` | RAG 量化评估指标 |
+| 第 15 课 | `lesson_15_cicd_showcase.md` | CI/CD + 简历写法 |
 
 ---
 
@@ -433,10 +508,34 @@ streamlit run app.py
 python cli_multi_agent.py
 ```
 
+### 启动 API 服务
+
+```bash
+python api_server.py
+# 访问 http://localhost:8000/docs 查看 API 文档
+```
+
 ### 启动测试
 
 ```bash
+# 自动化测试
+pytest tests/ -v
+
+# 手动测试
 python test_union/3_retrieval_modes_test.py
+```
+
+### Docker 部署
+
+```bash
+# 确保设置了 API Key
+export DASHSCOPE_API_KEY=your_key_here
+
+# 一键启动
+docker compose up -d
+
+# 查看日志
+docker compose logs -f
 ```
 
 ---
@@ -522,8 +621,19 @@ agent/manual_agent.py
 
 agent/react_agent.py
   → app.py
+  → api_server.py
   → eval/eval_agent.py
   → eval/compare_mono_vs_multi.py
+
+agent/orchestrator.py
+  → cli_multi_agent.py
+  → api_server.py (可选 multi_agent=True)
+
+api_server.py
+  → tests/test_api.py
+
+tests/conftest.py
+  → tests/test_rag.py / test_agent.py / test_api.py / test_utils.py
 ```
 
 ---

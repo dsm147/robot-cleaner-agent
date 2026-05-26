@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+.idea/
+.vscode/
+chroma_db/
+bm25_cache.pkl
+bm25_cache_key.txt
+logs/
+.env
+tutorial/
+.claude/
