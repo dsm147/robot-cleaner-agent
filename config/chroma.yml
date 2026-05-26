@@ -3,7 +3,7 @@ persist_directory: chroma_db
 k: 3
 reranker_candidates: 10
 data_path: data
-md5_hex_store: md5.text
+md5_hex_store: data/.md5_store
 allow_knowledge_file_type: ["txt", "pdf"]
 
 chunk_size: 200

@@ -1,7 +1,6 @@
 """
 Reranker：使用 Cross-encoder 对检索结果进行重排序
 """
-from typing import list
 from langchain_core.documents import Document
 
 

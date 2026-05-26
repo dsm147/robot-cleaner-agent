@@ -37,7 +37,7 @@ class AgentEvaluator:
 
             elapsed = time.time() - start
 
-            actual_tools = []
+            actual_tools = list(self.agent.last_tool_calls)
 
             results.append({
                 "question": question,

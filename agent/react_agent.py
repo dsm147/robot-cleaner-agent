@@ -30,8 +30,10 @@ class ReactAgent:
             ),
             context_schema=dict,
         )
+        self.last_tool_calls: list[str] = []
 
     def execute_stream(self, query: str):
+        self.last_tool_calls = []
         input_dict = {
             "messages": [HumanMessage(content=query)],
         }
@@ -39,6 +41,11 @@ class ReactAgent:
         # 第三个参数context就是上下文runtime中的信息，就是我们做提示词切换的标记
         for chunk in self.agent.stream(input_dict, stream_mode="values", context={"report": False}):
             latest_message = chunk["messages"][-1]
+            if hasattr(latest_message, "additional_kwargs") and "tool_calls" in latest_message.additional_kwargs:
+                for tc in latest_message.additional_kwargs["tool_calls"]:
+                    name = tc.get("function", {}).get("name", "")
+                    if name and name not in self.last_tool_calls:
+                        self.last_tool_calls.append(name)
             if latest_message.content:
                 yield latest_message.content.strip() + "\n"
 

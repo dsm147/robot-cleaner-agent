@@ -1,7 +1,6 @@
 """
 Context 压缩：对检索到的文档片段进行压缩，去除不相关的内容
 """
-from typing import list
 from langchain_core.documents import Document
 from model.factory import chat_model
 
