@@ -1,5 +1,14 @@
-# ========== 构建阶段 ==========
-FROM python:3.11-slim AS builder
+# ========== 前端构建阶段 ==========
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /build/frontend
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci
+COPY frontend/ .
+RUN npm run build
+
+# ========== Python 依赖构建阶段 ==========
+FROM python:3.11-slim AS python-builder
 
 WORKDIR /build
 
@@ -15,11 +24,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 从构建阶段复制已安装的依赖
-COPY --from=builder /root/.local /root/.local
+# 复制 Python 依赖
+COPY --from=python-builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 
+# 复制应用代码
 COPY . .
+
+# 复制前端构建产物
+COPY --from=frontend-builder /build/frontend/dist /app/frontend/dist
 
 EXPOSE 8000
 
