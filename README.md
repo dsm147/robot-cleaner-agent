@@ -52,10 +52,10 @@
 │   ├── test_agent.py        # Agent + Multi-Agent 测试
 │   ├── test_api.py          # API 测试
 │   └── test_utils.py        # 工具函数测试
-├── test_union/              # 手动集成测试
-├── app.py                   # Streamlit Web 界面
-├── api_server.py            # FastAPI REST API（生产环境也提供前端静态文件）
-├── cli_multi_agent.py       # 命令行多 Agent
+├── app/                     # 应用入口
+│   ├── app.py               # Streamlit Web 界面
+│   ├── api_server.py        # FastAPI REST API（生产环境也提供前端静态文件）
+│   └── cli_multi_agent.py   # 命令行多 Agent
 ├── frontend/                # React 聊天界面 (Vite + TypeScript)
 │   ├── src/App.tsx          #   聊天组件
 │   └── vite.config.ts       #   开发环境代理 /chat → localhost:8000
@@ -89,7 +89,7 @@
 
 ```
 ┌──────────────────────────────────────────┐
-│  第五层：应用层 (app.py / cli*.py)        │
+│  第五层：应用层 (app/ — Streamlit/API/CLI) │
 ├──────────────────────────────────────────┤
 │  第四层：Agent 层 (react/manual/orch)     │
 ├──────────────────────────────────────────┤
@@ -364,25 +364,25 @@
 
 ## 第五层：应用层（用户界面）
 
-### `app.py` — Streamlit Web 界面
+### `app/app.py` — Streamlit Web 界面
 
 **何时用到**：想通过网页和 AI 客服对话时。
 
 **如何启动**：
 ```bash
-streamlit run app.py
+streamlit run app/app.py
 ```
 
 **功能**：Streamlit 聊天界面，使用 `ReactAgent`，支持流式输出、清空对话、侧边栏信息展示。
 
-### `api_server.py` — FastAPI REST API（含前端静态服务）
+### `app/api_server.py` — FastAPI REST API（含前端静态服务）
 
 **何时用到**：想通过 HTTP 调用智能客服时（集成到其他系统、小程序、企业微信等），或想直接使用 Web 聊天界面时。
 
 **如何启动**：
 ```bash
-python api_server.py
-# 或: uvicorn api_server:app --host 0.0.0.0 --port 8000
+python app/api_server.py
+# 或: uvicorn app.api_server:app --host 0.0.0.0 --port 8000
 ```
 
 **功能**：提供三个 API 接口 + 一个 Web 界面：
@@ -406,7 +406,7 @@ python api_server.py
 **开发模式启动**（前后端分离，支持热重载）：
 ```bash
 # 终端 1：启动后端 API
-python api_server.py
+python app/api_server.py
 
 # 终端 2：启动前端开发服务器
 cd frontend
@@ -414,15 +414,15 @@ npm install   # 首次运行需要
 npm run dev   # 访问 http://localhost:5173
 ```
 
-**生产模式**：`api_server.py` 在检测到 `frontend/dist/` 目录存在时，自动挂载为静态文件服务。Docker 构建会自动生产前端产物，部署后直接访问 `http://localhost:8000`。
+**生产模式**：`app/api_server.py` 在检测到 `frontend/dist/` 目录存在时，自动挂载为静态文件服务。Docker 构建会自动生产前端产物，部署后直接访问 `http://localhost:8000`。
 
-### `cli_multi_agent.py` — 命令行多 Agent 界面
+### `app/cli_multi_agent.py` — 命令行多 Agent 界面
 
 **何时用到**：想在终端体验多 Agent 分工时。
 
 **如何启动**：
 ```bash
-python cli_multi_agent.py
+python app/cli_multi_agent.py
 ```
 
 **功能**：命令行交互，使用 `MultiAgentSystem`（orchestrator.py），会打印意图分类结果和 Agent 分工过程。
@@ -501,32 +501,6 @@ pytest tests/ --cov=. --cov-report=term-missing
 | **`test_api.py`** | API 健康检查、聊天接口、流式接口、边界情况 |
 | **`test_utils.py`** | 路径工具、配置文件加载 |
 
-## 手动测试脚本
-
-### `test_union/` — 测试脚本集合
-
-所有文件放在同一目录，共享 `path_setup.py` 的路径初始化。
-
-| 文件 | 用途 | 什么时候用 |
-|---|---|---|
-| **`path_setup.py`** | 路径初始化，让 `from rag.*`、`from agent.*` 等导入正常工作 | 所有测试文件自动导入 |
-| **`1_Tool_Calling_test.py`** | 直接调用 LLM，观察 Tool Calling 的请求/响应格式 | 想理解 Tool Calling 机制时 |
-| **`2_two_retriever_mode_test.py`** | 对比 vector vs hybrid 的完整问答质量 | 想评估不同检索模式的回答效果时 |
-| **`2_two_retrivers_res_test.py`** | 对比纯向量 vs 混合检索的原始文档差异（不含 LLM 生成） | 想知道检索器本身返回什么文档时 |
-| **`3_retrieval_modes_test.py`** | 四种检索模式（vector/hybrid/rewrite/hyde）横向对比 | 想全面比较各检索模式时 |
-| **`5_test_prompts.py`** | 测试当前 RAG 提示词版本的效果 | 修改了 `rag_summarize.txt` 后想测试效果时 |
-| **`6_compare_agents.py`** | 对比 LangChain Agent vs 手写 Agent 的响应速度和效果 | 想评估两种 Agent 实现的差异时 |
-| **`7_graph_agent.py`** | LangGraph 版单 Agent 实现 | 想学习或测试 LangGraph 框架时 |
-| **`8_graph_multi_agent.py`** | LangGraph 版多 Agent 实现 | 想学习或测试 LangGraph 多 Agent 时 |
-
-**运行方式**：
-```bash
-# 在项目根目录下运行
-python test_union/1_Tool_Calling_test.py
-python test_union/5_test_prompts.py
-# 以此类推
-```
-
 ---
 
 ## 学习教程
@@ -592,19 +566,19 @@ vs.load_document()
 ### 启动 Web 界面
 
 ```bash
-streamlit run app.py
+streamlit run app/app.py
 ```
 
 ### 启动命令行多 Agent
 
 ```bash
-python cli_multi_agent.py
+python app/cli_multi_agent.py
 ```
 
 ### 启动 API 服务
 
 ```bash
-python api_server.py
+python app/api_server.py
 # 访问 http://localhost:8000/docs 查看 API 文档
 ```
 
@@ -613,9 +587,6 @@ python api_server.py
 ```bash
 # 自动化测试
 pytest tests/ -v
-
-# 手动测试
-python test_union/3_retrieval_modes_test.py
 ```
 
 ### Docker 部署
@@ -643,7 +614,7 @@ docker compose logs -f
     │
     ▼
 ┌─────────────────────────────────────────────────┐
-│  app.py (Streamlit) / cli_multi_agent.py (CLI)   │
+│  app/ — app.py (Streamlit) / cli_multi_agent.py   │
 │         │                                        │
 │         ▼                                        │
 │  ReactAgent / MultiAgentSystem                   │
@@ -706,26 +677,26 @@ model/factory.py
   → 全部需要 LLM 或 Embedding 的模块
 
 agent/tools/agent_tools.py
-  → agent/manual_agent.py → agent/orchestrator.py → cli_multi_agent.py
-  → agent/react_agent.py → app.py
+  → agent/manual_agent.py → agent/orchestrator.py → app/cli_multi_agent.py
+  → agent/react_agent.py → app/app.py
 
 agent/tools/middleware.py
-  → agent/react_agent.py → app.py
+  → agent/react_agent.py → app/app.py
 
 agent/manual_agent.py
-  → agent/orchestrator.py → cli_multi_agent.py
+  → agent/orchestrator.py → app/cli_multi_agent.py
 
 agent/react_agent.py
-  → app.py
-  → api_server.py
+  → app/app.py
+  → app/api_server.py
   → eval/eval_agent.py
   → eval/compare_mono_vs_multi.py
 
 agent/orchestrator.py
-  → cli_multi_agent.py
-  → api_server.py (可选 multi_agent=True)
+  → app/cli_multi_agent.py
+  → app/api_server.py (可选 multi_agent=True)
 
-api_server.py
+app/api_server.py
   → tests/test_api.py
 
 tests/conftest.py
@@ -741,12 +712,6 @@ tests/conftest.py
 - `get_weather`、`get_user_id`、`get_user_location`、`get_current_month` 返回的都是模拟/随机数据，不代表真实值
 - `data/external/records.csv` 包含模拟的用户使用记录数据
 - `fetch_external_data` 读取该 CSV 返回数据
-
-### 缓存文件
-
-- `chroma_db/`：ChromaDB 向量库持久化目录，首次 `load_document()` 后生成
-- `bm25_cache.pkl` + `bm25_cache_key.txt`：BM25 检索器缓存，源文件不变就不重建
-- 以上已在 `.gitignore` 中排除，不会提交到 Git
 
 ### 日志
 

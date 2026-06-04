@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 
 def test_health():
-    from api_server import app
+    from app.api_server import app
     client = TestClient(app)
     resp = client.get("/health")
     assert resp.status_code == 200
@@ -11,7 +11,7 @@ def test_health():
 
 
 def test_chat():
-    from api_server import app
+    from app.api_server import app
     client = TestClient(app)
     resp = client.post("/chat", json={"query": "你好"})
     assert resp.status_code == 200
@@ -19,14 +19,14 @@ def test_chat():
 
 
 def test_chat_stream():
-    from api_server import app
+    from app.api_server import app
     client = TestClient(app)
     with client.stream("POST", "/chat/stream", json={"query": "你好"}) as resp:
         assert resp.status_code == 200
 
 
 def test_chat_empty_query():
-    from api_server import app
+    from app.api_server import app
     client = TestClient(app)
     resp = client.post("/chat", json={"query": ""})
     assert resp.status_code == 200

@@ -6,7 +6,7 @@ import sys
 import os
 from contextlib import asynccontextmanager
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
@@ -96,7 +96,7 @@ def chat_stream(req: ChatRequest):
 
 
 # 提供前端静态文件服务（生产环境）
-frontend_dist = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "dist")
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
 if os.path.isdir(frontend_dist):
     from fastapi.staticfiles import StaticFiles
     app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")

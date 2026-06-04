@@ -20,7 +20,7 @@ services:
       - "${UI_PORT:-8501}:8501"
     environment:
       - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
-    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    command: streamlit run app/app.py --server.port=8501 --server.address=0.0.0.0
     depends_on:
       - api
     restart: unless-stopped
