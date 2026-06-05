@@ -14,7 +14,8 @@ DEFAULT_LOG_FORMAT = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
 )
 
-
+# 获取日志器的函数，参数可以指定日志器的名称、控制台日志级别、文件日志级别和日志文件路径   
+# 默认日志器名称为"agent"，控制台日志级别为INFO，文件日志级别为DEBUG，日志文件默认保存在logs目录下，文件名格式为"{name}_YYYYMMDD.log"
 def get_logger(
         name: str = "agent",
         console_level: int = logging.INFO,
@@ -51,7 +52,7 @@ def get_logger(
 # 快捷获取日志器
 logger = get_logger()
 
-
+# 测试代码，直接运行这个文件就能看到效果
 if __name__ == '__main__':
     logger.info("信息日志")
     logger.error("错误日志")

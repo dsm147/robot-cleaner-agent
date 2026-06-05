@@ -121,7 +121,7 @@ class VectorStoreService:
         return hybrid_retriever
 
     # ── BM25 缓存相关 ──────────────────────────────────────────────
-
+    # 通过计算数据文件的 MD5 来判断内容是否变化，避免重复构建 BM25 索引
     def _bm25_cache_path(self) -> str:
         return get_abs_path("bm25_cache.pkl")
 
