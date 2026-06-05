@@ -1,7 +1,7 @@
 """
 Query Rewrite：将用户口语化问题改写为适合检索的查询词
 """
-from model.factory import chat_model
+from model.factory import get_chat_model
 
 
 REWRITE_PROMPT = """你是一个检索查询优化专家。你的任务是将用户的自然语言问题改写为简洁、精确的检索查询，用于在扫地机器人知识库中搜索。
@@ -17,6 +17,7 @@ REWRITE_PROMPT = """你是一个检索查询优化专家。你的任务是将用
 
 def rewrite_query(user_input: str) -> str:
     """将用户问题改写为检索查询"""
+    chat_model = get_chat_model()
     prompt = REWRITE_PROMPT.format(input=user_input)
 
     response = chat_model.invoke([

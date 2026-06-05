@@ -2,7 +2,7 @@
 HyDE (Hypothetical Document Embeddings)：
 先让 LLM 基于问题生成假设答案，再用假设答案做向量检索
 """
-from model.factory import chat_model
+from model.factory import get_chat_model
 
 
 HYDE_PROMPT = """你是一个扫地机器人专家。请基于用户的问题，生成一段详细、专业的回答。
@@ -19,6 +19,7 @@ HYDE_PROMPT = """你是一个扫地机器人专家。请基于用户的问题，
 
 def generate_hypothetical_document(user_input: str) -> str:
     """生成假设文档用于检索"""
+    chat_model = get_chat_model()
     prompt = HYDE_PROMPT.format(input=user_input)
 
     response = chat_model.invoke([
