@@ -4,7 +4,7 @@ pytest 共享配置：Mock 所有 LLM 调用，避免测试消耗 API 费用
 import sys
 import os
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from langchain_core.messages import AIMessage
 from langchain_core.language_models.chat_models import BaseChatModel
 
@@ -13,16 +13,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 @pytest.fixture(autouse=True)
 def mock_llm():
-    """Mock chat_model 使其返回固定的 AIMessage，避免 LangGraph 消息处理报错"""
-    with patch("model.factory.chat_model", autospec=BaseChatModel) as mock:
-        # LangChain create_agent 内部会调用 bind_tools
-        # 让 bind_tools 返回自身，形成链式调用
-        mock.bind_tools.return_value = mock
-        mock.invoke.return_value = AIMessage(
-            content="这是 Mock 的回答",
-            tool_calls=[],
-            response_metadata={},
-        )
+    """Mock chat_model 使其返回固定的 AIMessage，避免 LangGraph 消息处理报错
+
+    直接 mock get_chat_model()，避免触发 factory.__getattr__ 懒加载逻辑。
+    """
+    mock = MagicMock(spec=BaseChatModel)
+    # LangChain create_agent 内部会调用 bind_tools
+    # 让 bind_tools 返回自身，形成链式调用
+    mock.bind_tools.return_value = mock
+    mock.invoke.return_value = AIMessage(
+        content="这是 Mock 的回答",
+        tool_calls=[],
+        response_metadata={},
+    )
+    embed_mock = MagicMock()
+    embed_mock.embed_query.return_value = [0.1] * 512
+    with patch("model.factory.get_chat_model", return_value=mock), \
+         patch("model.factory.get_embedding_model", return_value=embed_mock):
         yield mock
 
 
