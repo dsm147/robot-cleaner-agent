@@ -2,6 +2,10 @@
 HyDE (Hypothetical Document Embeddings)：
 先让 LLM 基于问题生成假设答案，再用假设答案做向量检索
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from model.factory import get_chat_model
 
 

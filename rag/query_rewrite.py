@@ -1,6 +1,10 @@
 """
 Query Rewrite：将用户口语化问题改写为适合检索的查询词
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from model.factory import get_chat_model
 
 
