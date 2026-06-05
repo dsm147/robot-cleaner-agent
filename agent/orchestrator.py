@@ -14,7 +14,7 @@ def load_prompt(file_path: str) -> str:
         return f.read()
 
 
-ORCHESTRATOR_PROMPT = load_prompt("prompts/orchestrator_prompt.txt")
+ORCHESTRATOR_PROMPT = load_prompt("prompts/orchestrator/orchestrator_prompt.txt")
 
 
 class OrchestratorAgent:
@@ -56,7 +56,7 @@ class CustomerServiceAgent:
     def __init__(self):
         from agent.manual_agent import ManualReactAgent
         self.agent = ManualReactAgent(
-            system_prompt_path="prompts/customer_service_prompt.txt",
+            system_prompt_path="prompts/orchestrator/customer_service_prompt.txt",
             max_iterations=5,
         )
 
@@ -73,7 +73,7 @@ class ReportAgent:
     def __init__(self):
         from agent.manual_agent import ManualReactAgent
         self.agent = ManualReactAgent(
-            system_prompt_path="prompts/report_agent_prompt.txt",
+            system_prompt_path="prompts/orchestrator/report_agent_prompt.txt",
             max_iterations=6,
         )
 

@@ -32,7 +32,7 @@ class TestManualAgent:
     def test_init_with_custom_prompt(self):
         from agent.manual_agent import ManualReactAgent
         agent = ManualReactAgent(
-            system_prompt_path="prompts/customer_service_prompt.txt",
+            system_prompt_path="prompts/orchestrator/customer_service_prompt.txt",
             max_iterations=3,
         )
         assert agent.max_iterations == 3
