@@ -6,6 +6,7 @@ from utils.config_handler import chroma_conf
 from model.factory import embed_model
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from utils.path_tool import get_abs_path
+from collections.abc import Sequence
 from utils.file_handler import pdf_loader, txt_loader, listdir_with_allowed_type, get_file_md5_hex
 from utils.logger_handler import logger
 import os
@@ -18,7 +19,7 @@ class VectorStoreService:
     def __init__(self):
         self.vector_store = Chroma(
             collection_name=chroma_conf["collection_name"],
-            embedding_function=embed_model,
+            embedding_function=embed_model,  # type: ignore[arg-type]
             persist_directory=chroma_conf["persist_directory"],
         )
 
@@ -67,7 +68,7 @@ class VectorStoreService:
 
             return []
 
-        allowed_files_path: list[str] = listdir_with_allowed_type(
+        allowed_files_path: Sequence[str] = listdir_with_allowed_type(
             get_abs_path(chroma_conf["data_path"]),
             tuple(chroma_conf["allow_knowledge_file_type"]),
         )
@@ -75,6 +76,8 @@ class VectorStoreService:
         for path in allowed_files_path:
             # 获取文件的MD5
             md5_hex = get_file_md5_hex(path)
+            if md5_hex is None:
+                continue
 
             if check_md5_hex(md5_hex):
                 logger.info(f"[加载知识库]{path}内容已经存在知识库内，跳过")
