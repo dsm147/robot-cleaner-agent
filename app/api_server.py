@@ -38,10 +38,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 全局单例 Agent 实例（初始为 None，首次调用时创建）
 _agent = None
 _multi_agent = None
 
-
+# 单例模式获取 Agent 实例，避免重复创建
 def get_agent():
     global _agent
     if _agent is None:
@@ -55,12 +56,12 @@ def get_multi_agent():
         _multi_agent = MultiAgentSystem()
     return _multi_agent
 
-
+# API 请求和响应模型
 class ChatRequest(BaseModel):
     query: str
     multi_agent: bool = False
 
-
+# API 响应模型
 class ChatResponse(BaseModel):
     response: str
 
