@@ -39,6 +39,7 @@
 │   ├── agent.yml            # Agent 数据路径
 │   └── prompts.yml          # 提示词文件路径
 ├── prompts/                 # 系统提示词
+│   └── orchestrator/        # 多 Agent 调度提示词
 ├── data/                    # 知识库源文件
 │   └── external/records.csv # 模拟用户使用记录
 ├── eval/                    # 评估系统
@@ -139,16 +140,19 @@
 
 | 文件 | 谁在用 | 作用 |
 |---|---|---|
+| 文件 | 谁在用 | 作用 |
+|---|---|---|
 | **`main_prompt.txt`** | `react_agent.py` / `manual_agent.py`（默认） | 主系统提示词：定义 Agent 的 ReAct 思考流程、7 个工具的使用规则 |
 | **`rag_summarize.txt`** | `rag_service.py` 的 `RagSummarizeService` | RAG 总结提示词：告诉 LLM 如何基于检索到的参考资料回答问题 |
-| **`orchestrator_prompt.txt`** | `orchestrator.py` 的 `OrchestratorAgent` | 调度提示词：判断用户意图是"客服咨询"还是"报告生成" |
-| **`customer_service_prompt.txt`** | `orchestrator.py` 的 `CustomerServiceAgent` | 客服 Agent 提示词：简化版，只有 3 个工具 |
-| **`report_agent_prompt.txt`** | `orchestrator.py` 的 `ReportAgent` | 报告 Agent 提示词：只有报告相关工具 |
 | **`report_switch_prompt.txt`** | `middleware.py` 的动态提示词切换 | 报告场景的备用提示词：当 `fill_context_for_report` 被调用后替换主提示词 |
+| **`orchestrator/`** | | **多 Agent 调度提示词集** |
+| └ **`orchestrator_prompt.txt`** | `orchestrator.py` 的 `OrchestratorAgent` | 调度提示词：判断用户意图是"客服咨询"还是"报告生成" |
+| └ **`customer_service_prompt.txt`** | `orchestrator.py` 的 `CustomerServiceAgent` | 客服 Agent 提示词：简化版，只有 3 个工具 |
+| └ **`report_agent_prompt.txt`** | `orchestrator.py` 的 `ReportAgent` | 报告 Agent 提示词：只有报告相关工具 |
 
 > **提示词关系图**：
 > - 单 Agent 模式：`main_prompt.txt` 包含全部 7 个工具，Agent 自主判断用哪个
-> - 多 Agent 模式：`orchestrator_prompt.txt` 做意图分类 → 分派给 `customer_service_prompt.txt`（3 工具）或 `report_agent_prompt.txt`（4 工具）
+> - 多 Agent 模式：`orchestrator/orchestrator_prompt.txt` 做意图分类 → 分派给 `orchestrator/customer_service_prompt.txt`（3 工具）或 `orchestrator/report_agent_prompt.txt`（4 工具）
 
 ---
 
@@ -658,8 +662,9 @@ docker compose logs -f
 config/*.yml
   → config_handler.py → 全部模块
 
-prompts/*.txt
+prompts/**/*.txt
   → prompt_loader.py → react_agent / manual_agent / middleware / rag_service
+  → orchestrator.py（orchestrator/ 子目录下的提示词）
 
 data/ 知识文件
   → vector_store.py → rag_service.py → agent_tools.py → 所有 Agent
