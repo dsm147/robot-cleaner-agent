@@ -1,10 +1,11 @@
+#构建知识库时用的
 import os
 import hashlib
 from utils.logger_handler import logger
 from langchain_core.documents import Document
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 
-
+# 获取文件的md5值，返回十六进制字符串
 def get_file_md5_hex(filepath: str):     # 获取文件的md5的十六进制字符串
 
     if not os.path.exists(filepath):
@@ -37,6 +38,7 @@ def get_file_md5_hex(filepath: str):     # 获取文件的md5的十六进制字�
         return None
 
 
+#获取给定目录下所有能处理（类型）的文件的列表（绝对路径），返回一个元组
 def listdir_with_allowed_type(path: str, allowed_types: tuple[str]):        # 返回文件夹内的文件列表（允许的文件后缀）
     files = []
 
@@ -50,7 +52,7 @@ def listdir_with_allowed_type(path: str, allowed_types: tuple[str]):        # �
 
     return tuple(files)
 
-
+#根据文件类型调用不同的加载器，返回一个Document列表
 def pdf_loader(filepath: str, passwd=None) -> list[Document]:
     return PyPDFLoader(filepath, passwd).load()
 

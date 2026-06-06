@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_classic.retrievers import EnsembleRetriever

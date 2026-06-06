@@ -1,6 +1,10 @@
 """
 Context 压缩：对检索到的文档片段进行压缩，去除不相关的内容
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from langchain_core.documents import Document
 from model.factory import chat_model
 

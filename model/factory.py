@@ -1,8 +1,10 @@
 """
 模型工厂：提供 Chat 和 Embedding 模型的懒加载单例
 """
+import sys
 import os
 from abc import ABC, abstractmethod
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from typing import Optional
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.chat_models import BaseChatModel

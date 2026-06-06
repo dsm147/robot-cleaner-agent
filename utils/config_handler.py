@@ -2,7 +2,11 @@
 yaml
 k: v
 """
+import sys
+import os
 import yaml
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from utils.path_tool import get_abs_path
 
 # 加载配置文件的工具函数，分别加载不同的配置文件，返回一个字典

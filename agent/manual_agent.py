@@ -1,7 +1,11 @@
 """
 手写 ReAct Agent：不使用 LangChain Agent 框架，从零实现
 """
+import sys
+import os
 import json
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from model.factory import chat_model
 from agent.tools.agent_tools import (
     rag_summarize, get_weather, get_user_location,
@@ -42,7 +46,8 @@ def fetch_external_data_func(user_id: str, month: str) -> str:
 def fill_context_for_report_func() -> str:
     return fill_context_for_report.invoke({})
 
-
+# 工具定义列表
+# 注意：每个工具都必须在 TOOL_REGISTRY 中有对应的实现函数
 TOOL_DEFINITIONS = [
     {
         "type": "function",
@@ -139,6 +144,7 @@ TOOL_DEFINITIONS = [
     },
 ]
 
+# 工具注册表：工具名称 -> 实现函数
 TOOL_REGISTRY = {
     "rag_summarize": rag_summarize_func,
     "get_weather": get_weather_func,
@@ -149,6 +155,7 @@ TOOL_REGISTRY = {
     "fill_context_for_report": fill_context_for_report_func,
 }
 
+# 工具定义映射：工具名称 -> 工具定义（方便根据名称动态构建工具列表）
 TOOL_DEFINITIONS_MAP = {
     tool_def["function"]["name"]: tool_def
     for tool_def in TOOL_DEFINITIONS

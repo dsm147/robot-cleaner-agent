@@ -1,6 +1,10 @@
 """
 命令行版 Multi-Agent 智能客服
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from agent.orchestrator import MultiAgentSystem
 
 

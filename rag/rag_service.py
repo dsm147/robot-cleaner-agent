@@ -8,6 +8,10 @@
   - "rewrite" Query Rewrite + 混合检索
   - "hyde"    HyDE（假设文档）+ 混合检索
 """
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from rag.vector_store import VectorStoreService
@@ -123,7 +127,7 @@ class RagSummarizeService(object):
             }
         )
 
-
+# 测试代码
 if __name__ == '__main__':
     rag = RagSummarizeService()
     print(rag.rag_summarize("小户型适合哪些扫地机器人"))

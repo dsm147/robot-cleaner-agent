@@ -2,8 +2,12 @@
 Multi-Agent 调度器（Orchestrator）
 负责：意图分类 → 分派给对应 Worker Agent → 返回结果
 """
+import sys
+import os
 import json
 import re
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from model.factory import chat_model
 from utils.path_tool import get_abs_path
 
