@@ -505,35 +505,6 @@ pytest tests/ --cov=. --cov-report=term-missing
 | **`test_api.py`** | API 健康检查、聊天接口、流式接口、边界情况 |
 | **`test_utils.py`** | 路径工具、配置文件加载 |
 
----
-
-## 学习教程
-
-### `tutorial/` — 从零到一学本项目
-
-**基础篇**（lesson_01 ~ lesson_10）：读懂项目代码，理解 RAG 和 Agent 原理。
-**进阶篇**（lesson_11 ~ lesson_15）：把项目做到可部署上线，写进简历。
-
-| 课程 | 文件 | 覆盖内容 |
-|---|---|---|
-| 第 1 课 | `lesson_01_project_anatomy.md` | 项目结构全览 |
-| 第 2 课 | `lesson_02_hybrid_retrieval.md` | 混合检索原理 |
-| 第 3 课 | `lesson_03_query_rewrite_hyde.md` | Query Rewrite 与 HyDE |
-| 第 4 课 | `lesson_04_reranker_context_compression.md` | Reranker 与上下文压缩 |
-| 第 5 课 | `lesson_05_prompt_engineering.md` | 提示词工程 |
-| 第 6 课 | `lesson_06_manual_react_agent.md` | 手写 ReAct Agent |
-| 第 7 课 | `lesson_07_memory_error_handling.md` | 记忆与错误处理 |
-| 第 8 课 | `lesson_08_langgraph.md` | LangGraph 框架 |
-| 第 9 课 | `lesson_09_evaluation.md` | 评估系统 |
-| 第 10 课 | `lesson_10_multi_agent.md` | 多 Agent 系统 |
-| 第 11 课 | `lesson_11_fastapi.md` | FastAPI + 流式 API |
-| 第 12 课 | `lesson_12_testing.md` | pytest 自动化测试 |
-| 第 13 课 | `lesson_13_docker.md` | Docker 部署 |
-| 第 14 课 | `lesson_14_eval_metrics.md` | RAG 量化评估指标 |
-| 第 15 课 | `lesson_15_cicd_showcase.md` | CI/CD + 简历写法 |
-
----
-
 ## 快速开始
 
 ### 前置条件
